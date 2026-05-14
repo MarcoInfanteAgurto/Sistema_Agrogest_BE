@@ -8,9 +8,9 @@ spring:
     name: calendar-service
 
   datasource:
-    url: ${SPRING_DATASOURCE_URL}
-    username: ${SPRING_DATASOURCE_USERNAME}
-    password: ${SPRING_DATASOURCE_PASSWORD}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://ep-icy-cloud-anu9v94b-pooler.c-6.us-east-1.aws.neon.tech/calendardb?sslmode=require&channel_binding=require}
+    username: ${SPRING_DATASOURCE_USERNAME:neondb_owner}
+    password: ${SPRING_DATASOURCE_PASSWORD:npg_sljYkGJve67x}
     driver-class-name: org.postgresql.Driver
 
   jpa:
