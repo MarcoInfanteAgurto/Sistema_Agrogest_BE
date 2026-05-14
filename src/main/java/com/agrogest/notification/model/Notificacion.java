@@ -14,7 +14,7 @@ import java.util.UUID;
 public class Notificacion {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue(strategy = GenerationType.AUTO) // Hibernate genera el UUID automáticamente
     private UUID id;
 
     @Column(name = "usuario_id", nullable = false)
@@ -30,6 +30,7 @@ public class Notificacion {
     private String mensaje;
 
     @Column(name = "leida", nullable = false)
+    @Builder.Default // Asegura que el valor por defecto se mantenga al usar Builder
     private Boolean leida = false;
 
     @Column(nullable = false)
@@ -43,6 +44,11 @@ public class Notificacion {
 
     @PrePersist
     public void prePersist() {
-        this.createdAt = LocalDateTime.now();
+        if (this.createdAt == null) {
+            this.createdAt = LocalDateTime.now();
+        }
+        if (this.leida == null) {
+            this.leida = false;
+        }
     }
 }

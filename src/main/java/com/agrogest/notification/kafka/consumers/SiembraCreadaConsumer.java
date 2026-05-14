@@ -1,7 +1,9 @@
 package com.agrogest.notification.kafka.consumers;
 
+import com.agrogest.notification.controller.NotificacionController;
+import com.agrogest.notification.dto.NotificacionResponse;
 import com.agrogest.notification.model.Notificacion;
-import com.agrogest.notification.service.InMemoryNotificationService;
+import com.agrogest.notification.repository.NotificacionRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,34 +19,57 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class SiembraCreadaConsumer {
 
-    private final InMemoryNotificationService notificationService;
+    private final NotificacionRepository notificationRepository;
     private final ObjectMapper objectMapper;
 
-    @KafkaListener(topics = "siembra-creada", groupId = "notification-service-group")
+    @KafkaListener(
+        topics = "siembra-creada", 
+        groupId = "notification-service-group",
+        errorHandler = "kafkaErrorHandler"
+    )
     public void onSiembraCreada(String eventJson) {
         log.info("📩 Evento recibido → siembra-creada | {}", eventJson);
 
         try {
             Map<String, Object> event = objectMapper.readValue(eventJson, Map.class);
             UUID usuarioId = UUID.fromString(event.get("usuarioId").toString());
-            UUID siembraId = UUID.fromString(event.get("id").toString());
-            UUID parcelaId = event.get("parcelaId") != null ? UUID.fromString(event.get("parcelaId").toString()) : null;
+            String nombreSiembra = event.get("nombre") != null ? event.get("nombre").toString() : "Nueva Siembra";
 
+            // 1. Construcción del objeto (Dejamos que la DB genere el ID o se asigne si es necesario)
             Notificacion notificacion = Notificacion.builder()
-                    .id(UUID.randomUUID())
                     .usuarioId(usuarioId)
                     .tipo("Siembra")
-                    .titulo("Nueva siembra iniciada")
-                    .mensaje("Se ha registrado una nueva siembra en tu parcela. " +
-                             "Recuerda configurar el riego y monitorear el progreso.")
+                    .titulo("Nueva siembra registrada")
+                    .mensaje("Se ha iniciado una nueva siembra: " + nombreSiembra)
                     .leida(false)
                     .prioridad("Alta")
-                    .parcelaId(parcelaId)
                     .createdAt(LocalDateTime.now())
                     .build();
 
-            notificationService.create(notificacion);
-            log.info("✅ Notificación de siembra creada para usuario: {}", usuarioId);
+            // 2. Guardado persistente en Neon
+            Notificacion guardada = notificationRepository.save(notificacion);
+            log.info("✅ Notificación de siembra guardada para usuario: {}", usuarioId);
+
+            // 3. Notificación en tiempo real vía SSE
+            NotificacionResponse response = NotificacionResponse.builder()
+                    .id(guardada.getId())
+                    .usuarioId(guardada.getUsuarioId())
+                    .tipo(guardada.getTipo())
+                    .titulo(guardada.getTitulo())
+                    .mensaje(guardada.getMensaje())
+                    .leida(guardada.getLeida())
+                    .prioridad(guardada.getPrioridad())
+                    .createdAt(guardada.getCreatedAt())
+                    .build();
+
+            NotificacionController.emitters.forEach(emitter -> {
+                try {
+                    emitter.send(response);
+                } catch (Exception e) {
+                    NotificacionController.emitters.remove(emitter);
+                }
+            });
+
         } catch (Exception e) {
             log.error("❌ Error procesando evento siembra-creada: {}", e.getMessage());
         }

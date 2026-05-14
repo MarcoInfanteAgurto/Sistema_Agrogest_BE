@@ -1,10 +1,13 @@
 package com.agrogest.notification.dto;
 
-import lombok.Data;
+import lombok.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Data
+@Builder // <--- ESTA ES LA QUE FALTA
+@AllArgsConstructor
+@NoArgsConstructor
 public class NotificacionResponse {
     private UUID id;
     private UUID usuarioId;
@@ -13,6 +16,6 @@ public class NotificacionResponse {
     private String mensaje;
     private Boolean leida;
     private String prioridad;
-    private UUID parcelaId;
     private LocalDateTime createdAt;
+private String parcelaId;
 }

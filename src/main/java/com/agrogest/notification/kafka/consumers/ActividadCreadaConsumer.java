@@ -1,13 +1,15 @@
 package com.agrogest.notification.kafka.consumers;
 
+import com.agrogest.notification.controller.NotificacionController;
+import com.agrogest.notification.dto.NotificacionResponse;
 import com.agrogest.notification.model.Notificacion;
-import com.agrogest.notification.service.InMemoryNotificationService;
+import com.agrogest.notification.repository.NotificacionRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.kafka.listener.ConsumerAwareListenerErrorHandler;
 import org.springframework.stereotype.Component;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -18,7 +20,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ActividadCreadaConsumer {
 
-    private final InMemoryNotificationService notificationService;
+    private final NotificacionRepository notificationRepository; 
     private final ObjectMapper objectMapper;
 
     @KafkaListener(
@@ -32,24 +34,46 @@ public class ActividadCreadaConsumer {
         try {
             Map<String, Object> event = objectMapper.readValue(eventJson, Map.class);
             UUID usuarioId = UUID.fromString(event.get("usuarioId").toString());
-            UUID actividadId = UUID.fromString(event.get("actividadId").toString());
-            UUID siembraId = event.get("siembraId") != null ? UUID.fromString(event.get("siembraId").toString()) : null;
-            String tipo = event.get("tipo") != null ? event.get("tipo").toString() : "Actividad";
+            String tipoActividad = event.get("tipo") != null ? event.get("tipo").toString() : "Actividad";
 
+            // 1. Construcción del objeto
             Notificacion notificacion = Notificacion.builder()
-                    .id(UUID.randomUUID())
                     .usuarioId(usuarioId)
                     .tipo("Actividad")
                     .titulo("Nueva actividad registrada")
-                    .mensaje("Se ha registrado una nueva actividad: " + tipo +
-                             ". Revisa el calendario para más detalles.")
+                    .mensaje("Se ha registrado una nueva actividad: " + tipoActividad + ". Revisa el calendario para más detalles.")
                     .leida(false)
                     .prioridad("Media")
                     .createdAt(LocalDateTime.now())
                     .build();
 
-            notificationService.create(notificacion);
-            log.info("✅ Notificación de actividad creada para usuario: {}", usuarioId);
+            // 2. Guardado en Neon (PostgreSQL)
+            Notificacion guardada = notificationRepository.save(notificacion); 
+            log.info("✅ Notificación guardada en Neon para usuario: {}", usuarioId);
+
+            // 3. ¡TIEMPO REAL! Enviar a Angular automáticamente
+            NotificacionResponse response = NotificacionResponse.builder()
+                    .id(guardada.getId())
+                    .usuarioId(guardada.getUsuarioId())
+                    .tipo(guardada.getTipo())
+                    .titulo(guardada.getTitulo())
+                    .mensaje(guardada.getMensaje())
+                    .leida(guardada.getLeida())
+                    .prioridad(guardada.getPrioridad())
+                    .createdAt(guardada.getCreatedAt())
+                    .build();
+
+            NotificacionController.emitters.forEach(emitter -> {
+    try {
+        emitter.send(SseEmitter.event()
+                .name("message")
+                .data(response));
+    } catch (Exception e) {
+        log.warn("Eliminando emisor fallido");
+        NotificacionController.emitters.remove(emitter);
+    }
+});
+
         } catch (Exception e) {
             log.error("❌ Error procesando evento actividad-creada: {}", e.getMessage());
         }

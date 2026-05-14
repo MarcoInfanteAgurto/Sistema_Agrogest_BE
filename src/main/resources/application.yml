@@ -18,18 +18,27 @@ spring:
       maximum-pool-size: 5
       minimum-idle: 2
       connection-timeout: 20000
+      # Ayuda a mantener la conexión viva con el pooler de Neon
+      keepalive-time: 30000 
 
   jpa:
     hibernate:
+      # 'update' creará las tablas si no existen en la base de datos de Neon
       ddl-auto: update
-    show-sql: false
+    # CAMBIO CLAVE: Activamos esto para ver en la consola los INSERT reales
+    show-sql: true
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
         physical_naming_strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
+        # Optimización para conexiones remotas (Neon)
+        jdbc:
+          batch_size: 10
+          order_inserts: true
 
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     consumer:
       group-id: notification-service-group
       auto-offset-reset: earliest
@@ -39,6 +48,9 @@ spring:
 
 logging:
   level:
+    root: INFO
     org.springframework.web: INFO
     org.springframework.kafka: INFO
     org.apache.kafka: WARN
+    # Esto te dirá exactamente qué valores está insertando Hibernate
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
