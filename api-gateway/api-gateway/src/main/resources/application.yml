@@ -1,0 +1,67 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+
+  cloud:
+    compatibility-verifier:
+      enabled: false
+    gateway:
+      routes:
+        # user-service
+        - id: user-service
+          uri: http://localhost:8081
+          predicates:
+            - Path=/api/users/**,/api/user/**
+
+        # parcel-service
+        - id: parcel-service
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/parcels/**,/api/parcel/**
+
+        # crop-service
+        - id: crop-service
+          uri: http://localhost:8083
+          predicates:
+            - Path=/api/cultivos/**,/api/siembras/**,/api/riego/**
+
+        # activity-service
+        - id: activity-service
+          uri: http://localhost:8084
+          predicates:
+            - Path=/api/actividades/**,/api/fotos/**,/api/notas/**
+
+        # notification-service
+        - id: notification-service
+          uri: http://localhost:8085
+          predicates:
+            - Path=/api/notificaciones/**
+
+        # calendar-service
+        - id: calendar-service
+          uri: http://localhost:8086
+          predicates:
+            - Path=/api/calendario/**,/api/eventos/**
+
+        # weather-service
+        - id: weather-service
+          uri: http://localhost:8087
+          predicates:
+            - Path=/api/clima/**,/api/weather/**
+
+      # Configuración CORS global
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedMethods: "*"
+            allowedHeaders: "*"
+            allowCredentials: false
+
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    reactor.netty: INFO
