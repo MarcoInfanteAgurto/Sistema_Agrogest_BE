@@ -42,14 +42,18 @@ public class NotificacionServiceImpl implements NotificacionService {
 
     @Override
     public List<NotificacionResponse> getByUsuario(UUID usuarioId) {
-        return repository.findByUsuarioIdOrderByCreatedAtDesc(usuarioId)
-                .stream().map(this::toResponse).toList();
+        return repository.findByUsuarioId(usuarioId)
+                .stream()
+                .map(this::toResponse)
+                .toList();
     }
 
     @Override
     public List<NotificacionResponse> getNoLeidas(UUID usuarioId) {
-        return repository.findByUsuarioIdAndLeidaFalse(usuarioId)
-                .stream().map(this::toResponse).toList();
+        return repository.findByUsuarioIdAndLeida(usuarioId, false)
+                .stream()
+                .map(this::toResponse)
+                .toList();
     }
 
     @Override
@@ -62,13 +66,12 @@ public class NotificacionServiceImpl implements NotificacionService {
 
     @Override
     public void markAllAsRead(UUID usuarioId) {
-        List<Notificacion> noLeidas = repository.findByUsuarioIdAndLeidaFalse(usuarioId);
+        List<Notificacion> noLeidas = repository.findByUsuarioIdAndLeida(usuarioId, false);
         noLeidas.forEach(n -> n.setLeida(true));
         repository.saveAll(noLeidas);
     }
 
     private NotificacionResponse toResponse(Notificacion n) {
-        // Usamos el constructor o setters asegurándonos de que los campos existan en el DTO
         NotificacionResponse res = new NotificacionResponse();
         res.setId(n.getId());
         res.setUsuarioId(n.getUsuarioId());
@@ -78,9 +81,7 @@ public class NotificacionServiceImpl implements NotificacionService {
         res.setLeida(n.getLeida());
         res.setPrioridad(n.getPrioridad());
         
-        // Verificamos si existe el campo en n antes de asignar
         res.setParcelaId(n.getParcelaId() != null ? n.getParcelaId().toString() : null);
-        
         res.setCreatedAt(n.getCreatedAt());
         return res;
     }

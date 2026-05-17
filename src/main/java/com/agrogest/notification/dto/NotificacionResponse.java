@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Data
-@Builder // <--- ESTA ES LA QUE FALTA
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 public class NotificacionResponse {
@@ -17,5 +17,5 @@ public class NotificacionResponse {
     private Boolean leida;
     private String prioridad;
     private LocalDateTime createdAt;
-private String parcelaId;
+    private String parcelaId;
 }
