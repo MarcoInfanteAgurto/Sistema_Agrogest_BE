@@ -35,7 +35,7 @@ public class SiembraCreadaConsumer {
             UUID usuarioId = UUID.fromString(event.get("usuarioId").toString());
             String nombreSiembra = event.get("nombre") != null ? event.get("nombre").toString() : "Nueva Siembra";
 
-            // 1. Construcción del objeto (Dejamos que la DB genere el ID o se asigne si es necesario)
+            //Construcción del objeto (Dejamos que la DB genere el ID o se asigne si es necesario)
             Notificacion notificacion = Notificacion.builder()
                     .usuarioId(usuarioId)
                     .tipo("Siembra")
@@ -46,11 +46,11 @@ public class SiembraCreadaConsumer {
                     .createdAt(LocalDateTime.now())
                     .build();
 
-            // 2. Guardado persistente en Neon
+            //Guardado persistente en Neon
             Notificacion guardada = notificationRepository.save(notificacion);
             log.info("✅ Notificación de siembra guardada para usuario: {}", usuarioId);
 
-            // 3. Notificación en tiempo real vía SSE
+            //Notificación en tiempo real vía SSE
             NotificacionResponse response = NotificacionResponse.builder()
                     .id(guardada.getId())
                     .usuarioId(guardada.getUsuarioId())

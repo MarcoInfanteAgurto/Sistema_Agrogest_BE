@@ -36,11 +36,11 @@ public void onUsuarioCreado(String eventJson) {
         String nombre = event.get("nombre") != null ? event.get("nombre").toString() : "Usuario";
         String email = event.get("email") != null ? event.get("email").toString() : "N/A";
 
-        // 🚀 SOLUCIÓN: Guardamos la notificación vinculada a TU ID de pruebas en Neon
+        // Guardamos la notificación vinculada a TU ID de pruebas en Neon
         UUID miUsuarioLogueadoId = UUID.fromString("2226fb12-dc4b-4067-91fa-f5b3cc4fed5a");
 
         Notificacion notificacion = Notificacion.builder()
-                .usuarioId(miUsuarioLogueadoId) // Al guardarse con tu ID, el F5 la encontrará siempre
+                .usuarioId(miUsuarioLogueadoId)
                 .tipo("Sistema")
                 .titulo("Usuario Registrado")
                 .mensaje("Se ha creado con éxito al usuario: " + nombre)
@@ -52,7 +52,7 @@ public void onUsuarioCreado(String eventJson) {
         Notificacion guardada = notificationRepository.save(notificacion);
         log.info("✅ Notificación guardada en DB para tu panel historial");
 
-        // 2. Transmisión SSE (EXACTAMENTE IGUAL a como lo tenías para que reaccione la campana en vivo)
+        // 2. Transmisión SSE
         NotificacionResponse response = NotificacionResponse.builder()
                 .id(guardada.getId())
                 .usuarioId(null) 

@@ -14,7 +14,7 @@ import java.util.UUID;
 public class Notificacion {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO) // Hibernate genera el UUID automáticamente
+    @GeneratedValue(strategy = GenerationType.AUTO) 
     private UUID id;
 
     @Column(name = "usuario_id", nullable = false)
@@ -30,11 +30,11 @@ public class Notificacion {
     private String mensaje;
 
     @Column(name = "leida", nullable = false)
-    @Builder.Default // Asegura que el valor por defecto se mantenga al usar Builder
+    @Builder.Default 
     private Boolean leida = false;
 
     @Column(nullable = false)
-    private String prioridad;   // "Urgente" | "Alta" | "Media" | "Baja"
+    private String prioridad;
 
     @Column(name = "parcela_id")
     private UUID parcelaId;

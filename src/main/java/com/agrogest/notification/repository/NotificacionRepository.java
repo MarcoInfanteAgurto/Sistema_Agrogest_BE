@@ -8,9 +8,7 @@ import java.util.UUID;
 
 @Repository
 public interface NotificacionRepository extends JpaRepository<Notificacion, UUID> {
-    // Registra la búsqueda de todas las notificaciones de un usuario
     List<Notificacion> findByUsuarioId(UUID usuarioId);
     
-    // Registra la búsqueda filtrando por estado de lectura (para las no leídas)
     List<Notificacion> findByUsuarioIdAndLeida(UUID usuarioId, boolean leida);
 }
