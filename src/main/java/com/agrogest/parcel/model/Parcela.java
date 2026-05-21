@@ -45,6 +45,10 @@ public class Parcela {
     @Column(name = "imagen_mapa")
     private String imagenMapa;
 
+    @Column(nullable = false, columnDefinition = "boolean default true")
+    @Builder.Default
+    private Boolean activo = true;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

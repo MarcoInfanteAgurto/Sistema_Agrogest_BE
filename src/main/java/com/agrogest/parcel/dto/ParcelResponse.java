@@ -18,4 +18,5 @@ public class ParcelResponse {
     private BigDecimal longitud;
     private String imagenMapa;
     private LocalDateTime createdAt;
+    private Boolean activo;
 }

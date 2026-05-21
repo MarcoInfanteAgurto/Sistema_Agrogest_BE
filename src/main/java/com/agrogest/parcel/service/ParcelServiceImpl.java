@@ -81,50 +81,44 @@ public class ParcelServiceImpl implements ParcelService {
         return toResponse(repository.save(parcela));
     }
 
-    @Override
-    public ParcelResponse deactivateParcel(UUID id) {
+@Override
+public ParcelResponse deactivateParcel(UUID id) {
+    Parcela parcela = findOrThrow(id);
+    if (!parcela.getActivo())
+        throw new RuntimeException("La parcela ya está inactiva");
+    parcela.setActivo(false);
+    return toResponse(repository.save(parcela));
+}
 
-        Parcela parcela = findOrThrow(id);
-
-        if ("En descanso".equals(parcela.getEstado())) {
-            throw new RuntimeException("La parcela ya está en descanso");
-        }
-
-        parcela.setEstado("En descanso");
-        return toResponse(repository.save(parcela));
-    }
-
-    @Override
-    public ParcelResponse restoreParcel(UUID id) {
-
-        Parcela parcela = findOrThrow(id);
-
-        if (!"En descanso".equals(parcela.getEstado())) {
-            throw new RuntimeException("Solo se pueden restaurar parcelas en descanso");
-        }
-
-        parcela.setEstado("Disponible");
-        return toResponse(repository.save(parcela));
-    }
+   @Override
+public ParcelResponse restoreParcel(UUID id) {
+    Parcela parcela = findOrThrow(id);
+    if (parcela.getActivo())
+        throw new RuntimeException("La parcela ya está activa");
+    parcela.setActivo(true);
+    return toResponse(repository.save(parcela));
+}
 
     private Parcela findOrThrow(UUID id) {
         return repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Parcela no encontrada con id: " + id));
     }
 
-    private ParcelResponse toResponse(Parcela p) {
-        ParcelResponse res = new ParcelResponse();
-        res.setId(p.getId());
-        res.setUsuarioId(p.getUsuarioId());
-        res.setNombre(p.getNombre());
-        res.setAreaHectareas(p.getAreaHectareas());
-        res.setTipoSuelo(p.getTipoSuelo());
-        res.setEstado(p.getEstado());
-        res.setCultivoActualId(p.getCultivoActualId());
-        res.setLatitud(p.getLatitud());
-        res.setLongitud(p.getLongitud());
-        res.setImagenMapa(p.getImagenMapa());
-        res.setCreatedAt(p.getCreatedAt());
-        return res;
-    }
+private ParcelResponse toResponse(Parcela p) {
+    ParcelResponse res = new ParcelResponse();
+    res.setId(p.getId());
+    res.setUsuarioId(p.getUsuarioId());
+    res.setNombre(p.getNombre());
+    res.setAreaHectareas(p.getAreaHectareas());
+    res.setTipoSuelo(p.getTipoSuelo());
+    res.setEstado(p.getEstado());
+    res.setActivo(p.getActivo());          // ← nuevo
+    res.setCultivoActualId(p.getCultivoActualId());
+    res.setLatitud(p.getLatitud());
+    res.setLongitud(p.getLongitud());
+    res.setImagenMapa(p.getImagenMapa());
+    res.setCreatedAt(p.getCreatedAt());
+    return res;
+}
+
 }
