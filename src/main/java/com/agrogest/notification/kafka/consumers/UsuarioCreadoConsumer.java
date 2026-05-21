@@ -17,65 +17,67 @@ import java.util.UUID;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class UsuarioCreadoConsumer {
+public class NotificacionConsumer {
 
     private final NotificacionRepository notificationRepository;
     private final ObjectMapper objectMapper;
 
     @KafkaListener(
-    topics = "usuario-creado", 
-    groupId = "notification-service-group",
-    errorHandler = "kafkaErrorHandler"
-)
-public void onUsuarioCreado(String eventJson) {
-    log.info("📩 Evento recibido → usuario-creado | {}", eventJson);
+        topics = "notifications", 
+        groupId = "notification-service-group",
+        errorHandler = "kafkaErrorHandler"
+    )
+    public void onNotificationReceived(String eventJson) {
+        log.info("📩 Evento recibido → notifications | {}", eventJson);
 
-    try {
-        Map<String, Object> event = objectMapper.readValue(eventJson, Map.class);
-        
-        String nombre = event.get("nombre") != null ? event.get("nombre").toString() : "Usuario";
-        String email = event.get("email") != null ? event.get("email").toString() : "N/A";
+        try {
+            Map<String, Object> event = objectMapper.readValue(eventJson, Map.class);
+            
+            String nombre = event.get("nombre") != null ? event.get("nombre").toString() : "Usuario";
+            String titulo = event.get("titulo") != null ? event.get("titulo").toString() : "Notificación del Sistema";
+            String mensaje = event.get("mensaje") != null ? event.get("mensaje").toString() : "Detalle de actividad en AgroGest para: " + nombre;
+            String prioridad = event.get("prioridad") != null ? event.get("prioridad").toString() : "Baja";
+            String tipo = event.get("tipo") != null ? event.get("tipo").toString() : "Sistema";
+            
+            String usuarioIdStr = event.get("usuarioId") != null ? event.get("usuarioId").toString() : "dd529113-9a0c-47b3-898c-11442bd42926";
+            UUID miUsuarioLogueadoId = UUID.fromString(usuarioIdStr);
 
-        // Guardamos la notificación vinculada a TU ID de pruebas en Neon
-        UUID miUsuarioLogueadoId = UUID.fromString("2226fb12-dc4b-4067-91fa-f5b3cc4fed5a");
+            Notificacion notificacion = Notificacion.builder()
+                    .usuarioId(miUsuarioLogueadoId)
+                    .tipo(tipo)
+                    .titulo(titulo)
+                    .mensaje(mensaje)
+                    .leida(false)
+                    .prioridad(prioridad)
+                    .createdAt(LocalDateTime.now())
+                    .build();
 
-        Notificacion notificacion = Notificacion.builder()
-                .usuarioId(miUsuarioLogueadoId)
-                .tipo("Sistema")
-                .titulo("Usuario Registrado")
-                .mensaje("Se ha creado con éxito al usuario: " + nombre)
-                .leida(false)
-                .prioridad("Baja")
-                .createdAt(LocalDateTime.now())
-                .build();
+            Notificacion guardada = notificationRepository.save(notificacion);
+            log.info("✅ Notificación guardada en DB para tu panel historial");
 
-        Notificacion guardada = notificationRepository.save(notificacion);
-        log.info("✅ Notificación guardada en DB para tu panel historial");
+            NotificacionResponse response = NotificacionResponse.builder()
+                    .id(guardada.getId())
+                    .usuarioId(guardada.getUsuarioId()) 
+                    .tipo(guardada.getTipo())
+                    .titulo(guardada.getTitulo())
+                    .mensaje(guardada.getMensaje())
+                    .leida(guardada.getLeida())
+                    .prioridad(guardada.getPrioridad())
+                    .createdAt(guardada.getCreatedAt())
+                    .build();
 
-        // 2. Transmisión SSE
-        NotificacionResponse response = NotificacionResponse.builder()
-                .id(guardada.getId())
-                .usuarioId(null) 
-                .tipo("Sistema")
-                .titulo("Usuario Registrado")
-                .mensaje("Se ha creado con éxito al usuario: " + nombre)
-                .leida(false)
-                .prioridad("Baja")
-                .createdAt(guardada.getCreatedAt())
-                .build();
+            if (!NotificacionController.emitters.isEmpty()) {
+                NotificacionController.emitters.forEach(emitter -> {
+                    try {
+                        emitter.send(response);
+                    } catch (Exception e) {
+                        NotificacionController.emitters.remove(emitter);
+                    }
+                });
+            }
 
-        if (!NotificacionController.emitters.isEmpty()) {
-            NotificacionController.emitters.forEach(emitter -> {
-                try {
-                    emitter.send(response);
-                } catch (Exception e) {
-                    NotificacionController.emitters.remove(emitter);
-                }
-            });
+        } catch (Exception e) {
+            log.error("❌ Error procesando evento notifications: {}", e.getMessage());
         }
-
-    } catch (Exception e) {
-        log.error("❌ Error procesando evento usuario-creado: {}", e.getMessage());
     }
-}
 }
