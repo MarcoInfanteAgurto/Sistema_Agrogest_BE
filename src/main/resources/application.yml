@@ -1,9 +1,9 @@
 server:
-  port: 8082
+  port: 8083
   error:
     include-message: always
   cors:
-    allowed-origins: "http://localhost:8080"
+    allowed-origins: "http://localhost:4200"
     allowed-methods: "*"
     allowed-headers: "*"
 
@@ -11,10 +11,12 @@ spring:
   application:
     name: parcel-service
 
+  # Conexión a la base de datos usando variables de entorno
   datasource:
-    url: ${SPRING_DATASOURCE_URL}
-    username: ${SPRING_DATASOURCE_USERNAME}
-    password: ${SPRING_DATASOURCE_PASSWORD}
+    # El formato es ${VARIABLE_ENTORNO:valor_por_defecto}
+    url: jdbc:postgresql://ep-icy-cloud-anu9v94b-pooler.c-6.us-east-1.aws.neon.tech/parceldb?sslmode=require
+    username: neondb_owner
+    password: npg_sljYkGJve67x
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -24,4 +26,9 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
+        # Esto convierte nombres de Java 'parcelId' a 'parcel_id' en la DB
         physical_naming_strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
+
+  # Configuración de Kafka (opcional si lo usas)
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
