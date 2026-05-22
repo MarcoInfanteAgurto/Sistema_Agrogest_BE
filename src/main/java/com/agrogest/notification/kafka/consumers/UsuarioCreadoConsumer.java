@@ -33,14 +33,19 @@ public class UsuarioCreadoConsumer {
         try {
             Map<String, Object> event = objectMapper.readValue(eventJson, Map.class);
             
+            if (event.get("usuarioId") == null) {
+                log.error("❌ No se puede procesar la notificación: El evento no contiene un 'usuarioId' válido.");
+                return;
+            }
+
+            String usuarioIdStr = event.get("usuarioId").toString();
+            UUID miUsuarioLogueadoId = UUID.fromString(usuarioIdStr);
+            
             String nombre = event.get("nombre") != null ? event.get("nombre").toString() : "Usuario";
             String titulo = event.get("titulo") != null ? event.get("titulo").toString() : "Notificación del Sistema";
             String mensaje = event.get("mensaje") != null ? event.get("mensaje").toString() : "Detalle de actividad en AgroGest para: " + nombre;
             String prioridad = event.get("prioridad") != null ? event.get("prioridad").toString() : "Baja";
             String tipo = event.get("tipo") != null ? event.get("tipo").toString() : "Sistema";
-            
-            String usuarioIdStr = event.get("usuarioId") != null ? event.get("usuarioId").toString() : "dd529113-9a0c-47b3-898c-11442bd42926";
-            UUID miUsuarioLogueadoId = UUID.fromString(usuarioIdStr);
 
             Notificacion notificacion = Notificacion.builder()
                     .usuarioId(miUsuarioLogueadoId)
