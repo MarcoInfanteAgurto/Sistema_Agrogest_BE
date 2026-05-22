@@ -17,7 +17,7 @@ import java.util.UUID;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class NotificacionConsumer {
+public class UsuarioCreadoConsumer {
 
     private final NotificacionRepository notificationRepository;
     private final ObjectMapper objectMapper;
