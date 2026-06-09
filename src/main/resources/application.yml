@@ -25,3 +25,8 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         physical_naming_strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
+
+jwt:
+  secret: ${JWT_SECRET:defaultSecretKeyNeedToBeAtLeast32BytesLongForHS256SecurityRequirement!}
+  expiration: ${JWT_EXPIRATION:86400000} # 24 horas en milisegundos
+

@@ -13,6 +13,7 @@ import java.util.UUID;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository repository;
+    private final JwtService jwtService;
 
     public UserResponse createUser(CreateUserRequest request) {
 
@@ -114,5 +115,23 @@ public class UserServiceImpl implements UserService {
         res.setActivo(u.getActivo());
         res.setCreatedAt(u.getCreatedAt());
         return res;
+    }
+
+    @Override
+    public LoginResponse login(LoginRequest request) {
+        User user = repository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new RuntimeException("Credenciales incorrectas"));
+
+        if (!user.getActivo()) {
+            throw new RuntimeException("La cuenta de usuario está desactivada");
+        }
+
+        // Validación simple de contraseña en texto plano
+        if (!user.getPasswordHash().equals(request.getPassword())) {
+            throw new RuntimeException("Credenciales incorrectas");
+        }
+
+        String token = jwtService.generateToken(user);
+        return new LoginResponse(token, toResponse(user));
     }
 }

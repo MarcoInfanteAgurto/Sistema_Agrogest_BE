@@ -17,4 +17,6 @@ public interface UserService {
     UserResponse deactivateUser(UUID id);
 
     UserResponse restoreUser(UUID id);
+
+    LoginResponse login(LoginRequest request);
 }

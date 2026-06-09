@@ -17,6 +17,12 @@ public class UserController {
 
     private final UserService userService;
 
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponse> login(
+            @Valid @RequestBody LoginRequest request) {
+        return ResponseEntity.ok(userService.login(request));
+    }
+
     @PostMapping
     public ResponseEntity<UserResponse> create(
             @Valid @RequestBody CreateUserRequest request) {
