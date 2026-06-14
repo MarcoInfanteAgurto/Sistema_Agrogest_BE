@@ -1,4 +1,4 @@
-# Multi-stage build
+# Multi-stage build - Agrogest Crop Service
 FROM eclipse-temurin:21-jdk-alpine AS builder
 WORKDIR /build
 COPY . .
