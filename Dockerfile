@@ -1,10 +1,7 @@
 # Multi-stage build
 FROM eclipse-temurin:21-jdk-alpine AS builder
 WORKDIR /build
-COPY pom.xml pom.xml
-COPY .mvn .mvn
-COPY mvnw mvnw
-COPY src src
+COPY . .
 RUN apk add --no-cache bash && \
     chmod +x ./mvnw && \
     ./mvnw clean package -DskipTests

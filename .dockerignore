@@ -14,5 +14,3 @@ node_modules/
 *.swo
 *~
 .mvn/wrapper/
-mvnw
-mvnw.cmd
