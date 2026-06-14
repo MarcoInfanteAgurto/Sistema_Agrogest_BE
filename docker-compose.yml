@@ -61,7 +61,7 @@ services:
 
   # Crop Service
   crop-service:
-    image: ${DOCKERHUB_USERNAME}/agrogest-crop-service:latest
+    image: ${DOCKERHUB_USERNAME}/ms-crop:latest
     container_name: agrogest-crop-service
     depends_on:
       postgres:
