@@ -1,0 +1,78 @@
+version: '3.8'
+
+services:
+  
+  # Tu Broker de Mensajería Local (Solo si parcel-service publica/escucha eventos)
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: agrogest-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_SYNC_LIMIT: 2
+      ZOOKEEPER_INIT_LIMIT: 5
+    ports:
+      - "2181:2181"
+    networks:
+      - agrogest-network
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: agrogest-kafka
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    ports:
+      - "9092:9092"
+    networks:
+      - agrogest-network
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-broker-api-versions.sh --bootstrap-server localhost:9092 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # TU IMAGEN: Mapeada para leer Neon y Kafka local
+  parcel-service:
+    image: ${DOCKERHUB_USERNAME:-robertoespinoza}/ms-parcel:latest
+    container_name: agrogest-parcel-service
+    depends_on:
+      kafka:
+        condition: service_healthy
+    environment:
+      # Le pasamos la URL exacta de Neon que tienes en tu yml
+      SPRING_DATASOURCE_URL: jdbc:postgresql://ep-icy-cloud-anu9v94b-pooler.c-6.us-east-1.aws.neon.tech/parceldb?sslmode=require
+      SPRING_DATASOURCE_USERNAME: neondb_owner
+      SPRING_DATASOURCE_PASSWORD: npg_sljYkGJve67x
+      # Apunta al Kafka que está acá abajo en el compose
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      SERVER_PORT: 8082
+    ports:
+      - "8082:8082"
+    networks:
+      - agrogest-network
+    restart: unless-stopped
+
+  # Panel para ver tu Kafka Local
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: agrogest-kafka-ui
+    depends_on:
+      - kafka
+    environment:
+      KAFKA_CLUSTERS_0_NAME: agrogest
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+    ports:
+      - "8080:8080"
+    networks:
+      - agrogest-network
+    restart: unless-stopped
+
+networks:
+  agrogest-network:
+    driver: bridge
