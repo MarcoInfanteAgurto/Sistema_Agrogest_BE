@@ -25,8 +25,17 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         physical_naming_strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
+  
+    # Configuración de Kafka (opcional si lo usas)
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
 
+      
 jwt:
   secret: ${JWT_SECRET:defaultSecretKeyNeedToBeAtLeast32BytesLongForHS256SecurityRequirement!}
   expiration: ${JWT_EXPIRATION:86400000} # 24 horas en milisegundos
+
 
