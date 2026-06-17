@@ -14,11 +14,99 @@ services:
     networks:
       - red-zookeeper
       - red-kafka
+    depends_on:
+      - agrogest-kafka
+
+  agrogest-apigateway:
+    image: logan695/leonardo-ms-gateway:latest
+    pull_policy: never
+    container_name: agrogest-apigateway-service
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_CLOUD_GATEWAY_ROUTES_0_URI=http://agrogest-user-service:8081
+      - SPRING_CLOUD_GATEWAY_ROUTES_1_URI=http://agrogest-parcel:8082
+      - SPRING_CLOUD_GATEWAY_ROUTES_2_URI=http://agrogest-crop-service:8083
+      - SPRING_CLOUD_GATEWAY_ROUTES_3_URI=http://agrogest-activity:8084
+      - SPRING_CLOUD_GATEWAY_ROUTES_4_URI=http://agrogest-notifications-service:8085
+      - SPRING_CLOUD_GATEWAY_ROUTES_5_URI=http://agrogest-calendar-service:8086
+      - SPRING_CLOUD_GATEWAY_ROUTES_6_URI=http://agrogest-weather:8087
+    networks:
+      - red-zookeeper
+      - red-kafka
+
+  agrogest-calendar:
+    image: yumsum0613/calendar-service:latest
+    container_name: agrogest-calendar-service
+    ports:
+      - "8086:8086"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://ep-icy-cloud-anu9v94b-pooler.c-6.us-east-1.aws.neon.tech/calendardb?sslmode=require&channel_binding=require
+      - SPRING_DATASOURCE_USERNAME=neondb_owner
+      - SPRING_DATASOURCE_PASSWORD=npg_sljYkGJve67x
+    networks:
+      - red-zookeeper
+      - red-kafka
+
+  agrogest-user:
+    image: logan695/leonardo-ms-user:latest
+    container_name: agrogest-user-service
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://ep-icy-cloud-anu9v94b-pooler.c-6.us-east-1.aws.neon.tech/userdb?sslmode=require&channel_binding=require
+      - SPRING_DATASOURCE_USERNAME=neondb_owner
+      - SPRING_DATASOURCE_PASSWORD=npg_sljYkGJve67x
+      - JWT_SECRET=defaultSecretKeyNeedToBeAtLeast32BytesLongForHS256SecurityRequirement!
+      - JWT_EXPIRATION=86400000
+    networks:
+      - red-zookeeper
+      - red-kafka
+
+  agrogest-crop:
+    image: marco2909/ms-crop:latest
+    container_name: agrogest-crop-service
+    ports:
+      - "8083:8083"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://ep-icy-cloud-anu9v94b-pooler.c-6.us-east-1.aws.neon.tech/cropdb?sslmode=require&channel_binding=require
+      - SPRING_DATASOURCE_USERNAME=neondb_owner
+      - SPRING_DATASOURCE_PASSWORD=npg_sljYkGJve67x
+    networks:
+      - red-zookeeper
+      - red-kafka
+
+  agrogest-zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: agrogest-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    networks:
+      - red-zookeeper
+
+  agrogest-kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: agrogest-kafka
+    depends_on:
+      - agrogest-zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: agrogest-zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://agrogest-kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks:
+      - red-zookeeper
+      - red-kafka
 
 networks:
   red-zookeeper:
-    external: true
     name: agrogest-zookeeper-network
   red-kafka:
-    external: true
     name: agrogest-kafka-network
