@@ -1,18 +1,22 @@
 package com.agrogest.crop.service;
 
 import com.agrogest.crop.dto.*;
+import com.agrogest.crop.kafka.CultivoEventProducer;
 import com.agrogest.crop.model.Cultivo;
 import com.agrogest.crop.repository.CultivoRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CultivoServiceImpl implements CultivoService {
 
     private final CultivoRepository repository;
+    private final CultivoEventProducer cultivoEventProducer;
 
     @Override
     public CultivoResponse create(CreateCultivoRequest request) {
@@ -28,7 +32,13 @@ public class CultivoServiceImpl implements CultivoService {
                 .categoria(request.getCategoria())
                 .activo(true)
                 .build();
-        return toResponse(repository.save(cultivo));
+        Cultivo saved = repository.save(cultivo);
+        try {
+            cultivoEventProducer.publishCultivoCreated(saved.getId(), saved.getNombre());
+        } catch (Exception e) {
+            log.error("Error publishing cultivo-creado event: {}", e.getMessage());
+        }
+        return toResponse(saved);
     }
 
     @Override
