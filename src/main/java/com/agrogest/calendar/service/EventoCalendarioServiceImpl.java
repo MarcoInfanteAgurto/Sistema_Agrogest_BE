@@ -1,19 +1,23 @@
 package com.agrogest.calendar.service;
 
 import com.agrogest.calendar.dto.*;
+import com.agrogest.calendar.kafka.CalendarEventProducer;
 import com.agrogest.calendar.model.EventoCalendario;
 import com.agrogest.calendar.repository.EventoCalendarioRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class EventoCalendarioServiceImpl implements EventoCalendarioService {
 
     private final EventoCalendarioRepository repository;
+    private final CalendarEventProducer calendarEventProducer;
 
     @Override
     public EventoResponse create(CreateEventoRequest request) {
@@ -27,7 +31,13 @@ public class EventoCalendarioServiceImpl implements EventoCalendarioService {
                 .fechaFin(request.getFechaFin())
                 .color(request.getColor())
                 .build();
-        return toResponse(repository.save(evento));
+        EventoCalendario saved = repository.save(evento);
+        try {
+            calendarEventProducer.publishCalendarioCreado(saved.getId(), saved.getTitulo(), saved.getUsuarioId());
+        } catch (Exception e) {
+            log.error("Error publishing calendario-creado event: {}", e.getMessage());
+        }
+        return toResponse(saved);
     }
 
     @Override
