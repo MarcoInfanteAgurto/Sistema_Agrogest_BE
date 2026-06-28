@@ -1,0 +1,21 @@
+# Carpeta de build local (no se necesita en el contexto de Docker)
+target/
+
+# Archivos de IDE
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Archivo .env con secretos (nunca debe entrar en la imagen)
+.env
+
+# README
+README.md
+HELP.md
