@@ -44,6 +44,7 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://ep-icy-cloud-anu9v94b-pooler.c-6.us-east-1.aws.neon.tech/calendardb?sslmode=require&channel_binding=require
       - SPRING_DATASOURCE_USERNAME=neondb_owner
       - SPRING_DATASOURCE_PASSWORD=npg_sljYkGJve67x
+      - KAFKA_BOOTSTRAP_SERVERS=agrogest-kafka:29092
     networks:
       - red-zookeeper
       - red-kafka
@@ -72,6 +73,7 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://ep-icy-cloud-anu9v94b-pooler.c-6.us-east-1.aws.neon.tech/cropdb?sslmode=require&channel_binding=require
       - SPRING_DATASOURCE_USERNAME=neondb_owner
       - SPRING_DATASOURCE_PASSWORD=npg_sljYkGJve67x
+      - KAFKA_BOOTSTRAP_SERVERS=agrogest-kafka:29092
     networks:
       - red-zookeeper
       - red-kafka
